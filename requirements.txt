@@ -4,7 +4,7 @@ streamlit
 requests
 pydantic
 python-dotenv
-
+scikit-Learn
 groq
 
 
