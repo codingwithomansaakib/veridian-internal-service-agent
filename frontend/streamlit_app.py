@@ -1,83 +1,93 @@
+import os
 import requests
 import streamlit as st
 
 
-# =========================================================
-# CONFIGURATION
-# =========================================================
-
-API_URL = "http://127.0.0.1:8000"
-
-
-# =========================================================
+# ============================================================
 # PAGE CONFIG
-# =========================================================
+# ============================================================
 
 st.set_page_config(
-    page_title="Veridian IT Service Agent",
+    page_title="Veridian Internal Service Agent",
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 
-# =========================================================
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
+# Local development:
+# http://127.0.0.1:8000
+#
+# Streamlit Cloud:
+# Add API_URL to Streamlit Secrets.
+#
+# Example:
+# API_URL = "https://your-fastapi-service.onrender.com"
+
+try:
+    API_URL = st.secrets.get(
+        "API_URL",
+        os.getenv("API_URL", "http://127.0.0.1:8000")
+    )
+except Exception:
+    API_URL = os.getenv(
+        "API_URL",
+        "http://127.0.0.1:8000"
+    )
+
+
+# ============================================================
+# SESSION STATE
+# ============================================================
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+if "last_result" not in st.session_state:
+    st.session_state.last_result = None
+
+
+# ============================================================
 # CSS
-# =========================================================
+# ============================================================
 
 st.markdown(
     """
     <style>
 
-    .title {
-        font-size: 42px;
-        font-weight: 800;
-        margin-bottom: 4px;
+    .main-title {
+        font-size: 38px;
+        font-weight: 700;
+        margin-bottom: 5px;
     }
 
     .subtitle {
-        color: #8fa7c7;
         font-size: 17px;
+        opacity: 0.75;
         margin-bottom: 25px;
     }
 
-    .answer {
-        background: #191b22;
-        border: 1px solid #343743;
-        border-radius: 14px;
-        padding: 20px;
-        line-height: 1.7;
-        margin-bottom: 15px;
+    .source-box {
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(128,128,128,0.3);
+        margin-bottom: 8px;
     }
 
-    .info-card {
-        background: #191b22;
-        border: 1px solid #343743;
-        border-radius: 12px;
+    .ticket-box {
         padding: 15px;
-        margin-bottom: 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(128,128,128,0.35);
+        margin-top: 10px;
     }
 
-    .success-card {
-        background: #17241d;
-        border-left: 4px solid #39d98a;
-        border-radius: 10px;
-        padding: 14px;
-    }
-
-    .warning-card {
-        background: #291d1e;
-        border-left: 4px solid #ff5c5c;
-        border-radius: 10px;
-        padding: 14px;
-    }
-
-    .rag-card {
-        background: #171b24;
-        border-left: 4px solid #4da6ff;
-        border-radius: 10px;
-        padding: 14px;
-        margin-bottom: 10px;
+    .small-text {
+        font-size: 13px;
+        opacity: 0.7;
     }
 
     </style>
@@ -86,776 +96,234 @@ st.markdown(
 )
 
 
-# =========================================================
-# DEMO SCENARIOS
-# =========================================================
-
-DEMO_SCENARIOS = [
-    "I am locked out of my account. I tried my password 6 times.",
-    "Can I get Wi-Fi access for a guest tomorrow?",
-    "I think I got a phishing email asking for my login.",
-    "I cannot log into the expense tool.",
-    "My VPN credentials expired.",
-    "My laptop is completely dead and I have had it 3.5 years.",
-    "I work from home 4 days a week and need a monitor.",
-    "My mailbox is full and I cannot send emails.",
-    "A contractor needs VPN access next week.",
-]
-
-
-# =========================================================
-# SESSION STATE
-# =========================================================
-
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-
-# =========================================================
-# API REQUEST
-# =========================================================
-
-def call_agent(message: str):
-
-    try:
-
-        response = requests.post(
-            f"{API_URL}/chat",
-            json={
-                "message": message
-            },
-            timeout=90,
-        )
-
-        response.raise_for_status()
-
-        return response.json()
-
-    except requests.exceptions.ConnectionError:
-
-        st.error(
-            "❌ FastAPI is not running.\n\n"
-            "Start it with:\n\n"
-            "`uvicorn app.main:app --reload`"
-        )
-
-        return None
-
-    except requests.exceptions.Timeout:
-
-        st.error(
-            "⏱️ The request timed out. "
-            "Check the FastAPI/Groq terminal."
-        )
-
-        return None
-
-    except requests.exceptions.HTTPError as error:
-
-        st.error(
-            f"❌ FastAPI HTTP error: {error}"
-        )
-
-        return None
-
-    except Exception as error:
-
-        st.error(
-            f"❌ Unexpected error: {error}"
-        )
-
-        return None
-
-
-# =========================================================
-# SAFE GET
-# =========================================================
-
-def get_value(
-    data,
-    key,
-    default="Not available"
-):
-
-    value = data.get(
-        key,
-        default
-    )
-
-    if value is None:
-        return default
-
-    return value
-
-
-# =========================================================
-# DISPLAY RAG
-# =========================================================
-
-def display_rag(data):
-
-    st.markdown(
-        "### 🔍 RAG Retrieved Sources"
-    )
-
-    policies = data.get(
-        "policies",
-        []
-    )
-
-    policy_ids = data.get(
-        "policy_ids",
-        []
-    )
-
-    rag_error = data.get(
-        "rag_error"
-    )
-
-
-    if rag_error:
-
-        st.error(
-            f"RAG Error: {rag_error}"
-        )
-
-        return
-
-
-    if not policies:
-
-        if policy_ids:
-
-            st.warning(
-                "Policy IDs were returned, "
-                "but RAG policy details were not "
-                "returned by the backend."
-            )
-
-        else:
-
-            st.info(
-                "No RAG policy was retrieved."
-            )
-
-        return
-
-
-    for index, policy in enumerate(
-        policies
-    ):
-
-        policy_id = policy.get(
-            "policy_id",
-            "Unknown"
-        )
-
-        title = policy.get(
-            "title",
-            "Unknown policy"
-        )
-
-        content = policy.get(
-            "content",
-            ""
-        )
-
-        distance = policy.get(
-            "distance"
-        )
-
-
-        with st.expander(
-            f"📘 {policy_id} — {title}",
-            expanded=(index == 0),
-        ):
-
-            st.write(
-                content
-            )
-
-            if distance is not None:
-
-                st.caption(
-                    f"Vector distance: "
-                    f"{float(distance):.4f}"
-                )
-
-
-# =========================================================
-# DISPLAY ESCALATION
-# =========================================================
-
-def display_escalation(data):
-
-    st.markdown(
-        "### 🚨 Escalation"
-    )
-
-    escalation = data.get(
-        "escalation"
-    )
-
-
-    if not escalation:
-
-        st.success(
-            "No escalation required."
-        )
-
-        return
-
-
-    destination = escalation.get(
-        "destination",
-        "Unknown"
-    )
-
-    reason = escalation.get(
-        "reason",
-        "Human assistance required."
-    )
-
-    status = escalation.get(
-        "status",
-        "Pending"
-    )
-
-
-    st.markdown(
-        f"""
-        <div class="warning-card">
-
-        <strong>Destination:</strong>
-        {destination}
-
-        <br><br>
-
-        <strong>Reason:</strong>
-        {reason}
-
-        <br><br>
-
-        <strong>Status:</strong>
-        {status}
-
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-# =========================================================
-# DISPLAY REQUESTS
-# =========================================================
-
-def display_requests(data):
-
-    st.markdown(
-        "### 📋 Related Employee Requests"
-    )
-
-    requests_data = data.get(
-        "matched_requests",
-        []
-    )
-
-
-    if not requests_data:
-
-        st.info(
-            "No related employee request found."
-        )
-
-        return
-
-
-    for request in requests_data:
-
-        request_id = request.get(
-            "request_id",
-            "Unknown"
-        )
-
-        employee = request.get(
-            "employee",
-            "Unknown"
-        )
-
-        request_text = request.get(
-            "request",
-            request.get(
-                "issue",
-                "No description"
-            )
-        )
-
-        status = request.get(
-            "status",
-            request.get(
-                "initial_action",
-                "Unknown"
-            )
-        )
-
-
-        with st.expander(
-            f"📋 {request_id} — {employee}"
-        ):
-
-            st.write(
-                f"**Request:** {request_text}"
-            )
-
-            st.write(
-                f"**Status:** {status}"
-            )
-
-
-# =========================================================
-# DISPLAY TICKETS
-# =========================================================
-
-def display_tickets(data):
-
-    st.markdown(
-        "### 🎫 Related Tickets"
-    )
-
-    tickets_data = data.get(
-        "matched_tickets",
-        []
-    )
-
-
-    if not tickets_data:
-
-        st.info(
-            "No related ticket found."
-        )
-
-        return
-
-
-    for ticket in tickets_data:
-
-        ticket_id = ticket.get(
-            "ticket_id",
-            "Unknown"
-        )
-
-        employee = ticket.get(
-            "employee",
-            "Unknown"
-        )
-
-        issue = ticket.get(
-            "issue",
-            ticket.get(
-                "summary",
-                "No issue description"
-            )
-        )
-
-        status = ticket.get(
-            "status",
-            "Unknown"
-        )
-
-
-        with st.expander(
-            f"🎫 {ticket_id} — {employee}"
-        ):
-
-            st.write(
-                f"**Issue:** {issue}"
-            )
-
-            st.write(
-                f"**Status:** {status}"
-            )
-
-
-# =========================================================
-# DISPLAY CREATED STRUCTURED TICKET
-# =========================================================
-
-def display_created_ticket(data):
-    st.markdown("### 🎫 New Structured Ticket")
-    created_ticket = data.get("created_ticket")
-    if not created_ticket:
-        st.info("No new ticket was created for this request.")
-        return
-    ticket_id = created_ticket.get("ticket_id", "Unknown")
-    destination = created_ticket.get("destination", "Not specified")
-    intent = created_ticket.get("intent", "Unknown")
-    action = created_ticket.get("action", "Unknown")
-    status = created_ticket.get("status", "Unknown")
-    reason = created_ticket.get("reason", "Not specified")
-    created_at = created_ticket.get("created_at", "Not available")
-    st.markdown(
-        f"""
-        <div class="success-card">
-            <strong>Ticket ID:</strong> {ticket_id}
-            <br><br><strong>Destination:</strong> {destination}
-            <br><br><strong>Intent:</strong> {intent}
-            <br><br><strong>Action:</strong> {action}
-            <br><br><strong>Status:</strong> {status}
-            <br><br><strong>Reason:</strong> {reason}
-            <br><br><strong>Created At:</strong> {created_at}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-# =========================================================
-# DISPLAY COMPLETE AGENT RESPONSE
-# =========================================================
-
-def display_agent_response(data):
-
-    if not isinstance(
-        data,
-        dict
-    ):
-
-        st.error(
-            "Invalid response received from FastAPI."
-        )
-
-        return
-
-
-    # -----------------------------------------------------
-    # BASIC VALUES
-    # -----------------------------------------------------
-
-    intent = get_value(
-        data,
-        "intent"
-    )
-
-    action = get_value(
-        data,
-        "action"
-    )
-
-    answer = get_value(
-        data,
-        "answer",
-        "No answer returned."
-    )
-
-    policy_ids = data.get(
-        "policy_ids",
-        []
-    )
-
-
-    # -----------------------------------------------------
-    # AI RESPONSE
-    # -----------------------------------------------------
-
-    st.markdown(
-        "### 🤖 AI Agent Response"
-    )
-
-    st.markdown(
-        f"""
-        <div class="answer">
-        {answer}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-    # -----------------------------------------------------
-    # DECISION
-    # -----------------------------------------------------
-
-    st.markdown(
-        "### 🧠 Agent Decision"
-    )
-
-
-    col1, col2, col3 = st.columns(3)
-
-
-    with col1:
-
-        st.metric(
-            "Intent",
-            intent
-        )
-
-
-    with col2:
-
-        st.metric(
-            "Action",
-            action
-        )
-
-
-    with col3:
-
-        st.metric(
-            "RAG Policies",
-            len(policy_ids)
-        )
-
-
-    # -----------------------------------------------------
-    # POLICY IDS
-    # -----------------------------------------------------
-
-    if policy_ids:
-
-        st.markdown(
-            f"""
-            <div class="success-card">
-
-            <strong>📚 Policies Used:</strong>
-            {" • ".join(policy_ids)}
-
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-
-    # -----------------------------------------------------
-    # RAG
-    # -----------------------------------------------------
-
-    display_rag(data)
-
-
-    # -----------------------------------------------------
-    # ESCALATION
-    # -----------------------------------------------------
-
-    display_escalation(data)
-
-
-    # -----------------------------------------------------
-    # REQUESTS
-    # -----------------------------------------------------
-
-    display_requests(data)
-
-
-    # -----------------------------------------------------
-    # TICKETS
-    # -----------------------------------------------------
-
-    display_tickets(data)
-
-    # -----------------------------------------------------
-    # NEW STRUCTURED TICKET
-    # -----------------------------------------------------
-
-    display_created_ticket(data)
-
-
-# =========================================================
-# SIDEBAR
-# =========================================================
-
-with st.sidebar:
-
-    st.markdown(
-        "## 🤖 Demo scenarios"
-    )
-
-    st.caption(
-        "Try predefined Assignment 2 scenarios"
-    )
-
-
-    for index, scenario in enumerate(
-        DEMO_SCENARIOS
-    ):
-
-        if st.button(
-            scenario,
-            key=f"scenario_{index}",
-            use_container_width=True,
-        ):
-
-            st.session_state.pending_message = scenario
-
-            st.rerun()
-
-
-    st.divider()
-
-
-    st.markdown(
-        "### ⚙️ AI Architecture"
-    )
-
-
-    st.markdown(
-        """
-        <div class="info-card">
-
-        🧠 <strong>LLM:</strong> Groq
-
-        <br>🔍 <strong>RAG:</strong> Active
-
-        <br>🗄️ <strong>Vector DB:</strong> ChromaDB
-
-        <br>🧩 <strong>Embeddings:</strong>
-        Sentence Transformers
-
-        <br>⚙️ <strong>Decision Engine:</strong>
-        Active
-
-        <br>🚨 <strong>Escalation:</strong>
-        Active
-
-        <br>📝 <strong>Audit:</strong>
-        Active
-
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-    st.divider()
-
-
-    # Backend status
-
-    try:
-
-        health = requests.get(
-            f"{API_URL}/health",
-            timeout=3,
-        )
-
-        if health.ok:
-
-            st.success(
-                "🟢 FastAPI Connected"
-            )
-
-        else:
-
-            st.warning(
-                "🟡 FastAPI responded with an error"
-            )
-
-    except Exception:
-
-        st.error(
-            "🔴 FastAPI Offline"
-        )
-
-
-# =========================================================
-# MAIN HEADER
-# =========================================================
+# ============================================================
+# HEADER
+# ============================================================
 
 st.markdown(
-    '<div class="title">'
-    '🤖 Veridian Internal IT Service Agent'
-    '</div>',
+    '<div class="main-title">🤖 Veridian Internal Service Agent</div>',
     unsafe_allow_html=True,
 )
 
 st.markdown(
     '<div class="subtitle">'
-    'Assignment 2 — Policy-grounded Internal IT Support'
-    '</div>',
+    "AI-powered internal IT support agent for Veridian Corp"
+    "</div>",
     unsafe_allow_html=True,
 )
 
 
-# =========================================================
-# PROCESS PENDING DEMO
-# =========================================================
+# ============================================================
+# SIDEBAR
+# ============================================================
 
-if (
-    "pending_message"
-    in st.session_state
-):
+with st.sidebar:
 
-    message = st.session_state.pop(
-        "pending_message"
+    st.header("⚙️ System")
+
+    st.write("**Architecture**")
+
+    st.code(
+        """Employee
+   ↓
+Streamlit
+   ↓
+FastAPI
+   ↓
+Agent
+   ├── Intent Classification
+   ├── Decision Engine
+   ├── Policy RAG
+   ├── Request Tool
+   ├── Ticket Tool
+   └── Audit
+   ↓
+Groq LLM
+""",
+        language="text",
     )
 
+    st.divider()
 
-    st.session_state.messages.append(
-        {
-            "role": "user",
-            "content": message,
-        }
+    st.subheader("🔌 Backend")
+
+    st.code(API_URL)
+
+    if st.button("🔍 Check Backend Health", use_container_width=True):
+
+        try:
+            response = requests.get(
+                f"{API_URL}/health",
+                timeout=10,
+            )
+
+            if response.status_code == 200:
+                st.success("Backend is running ✅")
+                st.json(response.json())
+            else:
+                st.error(
+                    f"Backend returned status {response.status_code}"
+                )
+
+        except Exception as e:
+            st.error(f"Backend connection failed: {e}")
+
+    st.divider()
+
+    st.subheader("🎯 Demo Scenarios")
+
+    demo_password = st.button(
+        "🔐 Password Lockout",
+        use_container_width=True,
     )
 
-
-    result = call_agent(
-        message
+    demo_wifi = st.button(
+        "📶 Guest Wi-Fi",
+        use_container_width=True,
     )
 
+    demo_phishing = st.button(
+        "🚨 Phishing Incident",
+        use_container_width=True,
+    )
 
-    if result is not None:
+    demo_unknown = st.button(
+        "❓ Unclear Request",
+        use_container_width=True,
+    )
 
-        st.session_state.messages.append(
-            {
-                "role": "assistant",
-                "data": result,
-            }
+    if demo_password:
+        st.session_state.demo_message = (
+            "I am locked out of my account, "
+            "tried my password 6 times."
         )
 
+    elif demo_wifi:
+        st.session_state.demo_message = (
+            "Can I get Wi-Fi access for a guest tomorrow?"
+        )
 
-    st.rerun()
+    elif demo_phishing:
+        st.session_state.demo_message = (
+            "I think I got a phishing email asking for my login."
+        )
+
+    elif demo_unknown:
+        st.session_state.demo_message = (
+            "hey can you help, it's not working"
+        )
+
+    st.divider()
+
+    if st.button(
+        "🗑️ Clear Chat",
+        use_container_width=True,
+    ):
+        st.session_state.messages = []
+        st.session_state.last_result = None
+        st.rerun()
 
 
-# =========================================================
-# CHAT HISTORY
-# =========================================================
+# ============================================================
+# API FUNCTION
+# ============================================================
 
-for item in st.session_state.messages:
+def call_agent(message: str):
 
-    role = item.get(
-        "role"
+    response = requests.post(
+        f"{API_URL}/chat",
+        json={
+            "message": message
+        },
+        timeout=120,
     )
 
+    response.raise_for_status()
 
-    with st.chat_message(
-        role
-    ):
+    return response.json()
 
-        if role == "user":
 
-            st.write(
-                item.get(
-                    "content",
-                    ""
-                )
+# ============================================================
+# DEMO MESSAGE
+# ============================================================
+
+demo_message = st.session_state.get(
+    "demo_message",
+    "",
+)
+
+
+if demo_message:
+
+    st.info(
+        f"Demo scenario selected: **{demo_message}**"
+    )
+
+    if st.button("▶️ Run Demo Scenario"):
+
+        try:
+
+            with st.spinner("Agent is analyzing the request..."):
+
+                result = call_agent(demo_message)
+
+            st.session_state.last_result = result
+
+            st.session_state.messages.append(
+                {
+                    "role": "user",
+                    "content": demo_message,
+                }
             )
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": result.get(
+                        "answer",
+                        "No response generated."
+                    ),
+                }
+            )
+
+            st.session_state.demo_message = ""
+
+            st.rerun()
+
+        except Exception as e:
+
+            st.error(
+                f"Unable to contact backend: {e}"
+            )
+
+
+# ============================================================
+# CHAT HISTORY
+# ============================================================
+
+if st.session_state.messages:
+
+    st.subheader("💬 Conversation")
+
+    for message in st.session_state.messages:
+
+        if message["role"] == "user":
+
+            with st.chat_message("user"):
+                st.write(message["content"])
 
         else:
 
-            display_agent_response(
-                item.get(
-                    "data",
-                    {}
-                )
-            )
+            with st.chat_message("assistant"):
+                st.write(message["content"])
 
 
-# =========================================================
+# ============================================================
 # CHAT INPUT
-# =========================================================
+# ============================================================
 
 user_message = st.chat_input(
-    "Describe your IT problem..."
+    "Describe your IT issue..."
 )
 
 
@@ -868,20 +336,404 @@ if user_message:
         }
     )
 
+    try:
 
-    result = call_agent(
-        user_message
-    )
+        with st.spinner("Veridian Agent is working..."):
 
+            result = call_agent(user_message)
 
-    if result is not None:
+        st.session_state.last_result = result
 
         st.session_state.messages.append(
             {
                 "role": "assistant",
-                "data": result,
+                "content": result.get(
+                    "answer",
+                    "No response generated."
+                ),
             }
         )
 
+        st.rerun()
 
-    st.rerun()
+    except requests.exceptions.RequestException as e:
+
+        st.error(
+            f"Backend connection error: {e}"
+        )
+
+    except Exception as e:
+
+        st.error(
+            f"Unexpected error: {e}"
+        )
+
+
+# ============================================================
+# RESULT DISPLAY
+# ============================================================
+
+result = st.session_state.last_result
+
+
+if result:
+
+    st.divider()
+
+    # --------------------------------------------------------
+    # AGENT DECISION
+    # --------------------------------------------------------
+
+    st.header("🧠 Agent Decision")
+
+    intent = result.get(
+        "intent",
+        "unknown",
+    )
+
+    action = result.get(
+        "action",
+        "unknown",
+    )
+
+    policies = result.get(
+        "policies",
+        [],
+    )
+
+    policy_ids = result.get(
+        "policy_ids",
+        [],
+    )
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+
+        st.metric(
+            "Intent",
+            intent,
+        )
+
+    with col2:
+
+        st.metric(
+            "Action",
+            action,
+        )
+
+    with col3:
+
+        # IMPORTANT:
+        # Use actual retrieved policies instead of policy_ids.
+        st.metric(
+            "RAG Policies",
+            len(policies),
+        )
+
+
+    # --------------------------------------------------------
+    # AGENT RESPONSE
+    # --------------------------------------------------------
+
+    st.subheader("💬 Agent Response")
+
+    answer = result.get(
+        "answer",
+        "No response available.",
+    )
+
+    st.success(answer)
+
+
+    # --------------------------------------------------------
+    # RAG SOURCES
+    # --------------------------------------------------------
+
+    st.header("🔍 RAG Retrieved Sources")
+
+    if policies:
+
+        for policy in policies:
+
+            policy_id = policy.get(
+                "policy_id",
+                "Unknown",
+            )
+
+            title = policy.get(
+                "title",
+                "Untitled Policy",
+            )
+
+            content = policy.get(
+                "content",
+                "",
+            )
+
+            distance = policy.get(
+                "distance",
+                None,
+            )
+
+            source = policy.get(
+                "source",
+                "Veridian Internal IT Knowledge Base",
+            )
+
+            with st.expander(
+                f"📘 {policy_id} — {title}",
+                expanded=(
+                    policy_id
+                    == policies[0].get(
+                        "policy_id",
+                        ""
+                    )
+                ),
+            ):
+
+                if distance is not None:
+                    st.caption(
+                        f"Vector distance: {distance}"
+                    )
+
+                st.write(content)
+
+                st.caption(
+                    f"Source: {source}"
+                )
+
+    else:
+
+        st.info(
+            "No policy sources were retrieved."
+        )
+
+
+    # --------------------------------------------------------
+    # ESCALATION
+    # --------------------------------------------------------
+
+    escalation = result.get(
+        "escalation",
+        None,
+    )
+
+    if escalation:
+
+        st.header("🚨 Escalation")
+
+        destination = escalation.get(
+            "destination",
+            "Not specified",
+        )
+
+        reason = escalation.get(
+            "reason",
+            "",
+        )
+
+        st.error(
+            f"**Destination:** {destination}"
+        )
+
+        if reason:
+            st.write(
+                f"**Reason:** {reason}"
+            )
+
+
+    # --------------------------------------------------------
+    # MATCHED EMPLOYEE REQUESTS
+    # --------------------------------------------------------
+
+    matched_requests = result.get(
+        "matched_requests",
+        [],
+    )
+
+    st.header("📋 Related Employee Requests")
+
+    if matched_requests:
+
+        for request in matched_requests:
+
+            with st.expander(
+                request.get(
+                    "request_id",
+                    "Request",
+                )
+            ):
+
+                st.write(
+                    f"**Employee:** "
+                    f"{request.get('employee', 'N/A')}"
+                )
+
+                st.write(
+                    f"**Email:** "
+                    f"{request.get('email', 'N/A')}"
+                )
+
+                st.write(
+                    f"**Request:** "
+                    f"{request.get('request', 'N/A')}"
+                )
+
+                st.write(
+                    f"**Status:** "
+                    f"{request.get('status', 'N/A')}"
+                )
+
+    else:
+
+        st.info(
+            "No related employee requests found."
+        )
+
+
+    # --------------------------------------------------------
+    # MATCHED TICKETS
+    # --------------------------------------------------------
+
+    matched_tickets = result.get(
+        "matched_tickets",
+        [],
+    )
+
+    st.header("🎫 Related Tickets")
+
+    if matched_tickets:
+
+        for ticket in matched_tickets:
+
+            with st.expander(
+                ticket.get(
+                    "ticket_id",
+                    "Ticket",
+                )
+            ):
+
+                st.write(
+                    f"**Employee:** "
+                    f"{ticket.get('employee', 'N/A')}"
+                )
+
+                st.write(
+                    f"**Issue:** "
+                    f"{ticket.get('issue', 'N/A')}"
+                )
+
+                st.write(
+                    f"**Status:** "
+                    f"{ticket.get('status', 'N/A')}"
+                )
+
+    else:
+
+        st.info(
+            "No related tickets found."
+        )
+
+
+    # --------------------------------------------------------
+    # CREATED STRUCTURED TICKET
+    # --------------------------------------------------------
+
+    created_ticket = result.get(
+        "created_ticket",
+        None,
+    )
+
+    if created_ticket:
+
+        st.header("🎫 Structured Ticket Created")
+
+        st.success(
+            "A structured ticket was created for human follow-up."
+        )
+
+        with st.container(border=True):
+
+            st.write(
+                f"**Ticket ID:** "
+                f"{created_ticket.get('ticket_id', 'N/A')}"
+            )
+
+            st.write(
+                f"**Created At:** "
+                f"{created_ticket.get('created_at', 'N/A')}"
+            )
+
+            st.write(
+                f"**Source:** "
+                f"{created_ticket.get('source', 'N/A')}"
+            )
+
+            st.write(
+                f"**Employee Message:** "
+                f"{created_ticket.get('employee_message', 'N/A')}"
+            )
+
+            st.write(
+                f"**Intent:** "
+                f"{created_ticket.get('intent', 'N/A')}"
+            )
+
+            st.write(
+                f"**Action:** "
+                f"{created_ticket.get('action', 'N/A')}"
+            )
+
+            destination = created_ticket.get(
+                "destination",
+                None,
+            )
+
+            if destination:
+                st.write(
+                    f"**Destination:** {destination}"
+                )
+
+            reason = created_ticket.get(
+                "reason",
+                None,
+            )
+
+            if reason:
+                st.write(
+                    f"**Reason:** {reason}"
+                )
+
+            st.write(
+                f"**Status:** "
+                f"{created_ticket.get('status', 'N/A')}"
+            )
+
+
+    # --------------------------------------------------------
+    # RAG ERROR
+    # --------------------------------------------------------
+
+    rag_error = result.get(
+        "rag_error",
+        None,
+    )
+
+    if rag_error:
+
+        st.warning(
+            f"RAG warning: {rag_error}"
+        )
+
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.divider()
+
+st.caption(
+    "Veridian Corp Internal Service Agent • "
+    "Assignment 2 • AI Agent Factory"
+)

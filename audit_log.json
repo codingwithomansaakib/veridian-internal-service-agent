@@ -172,5 +172,35 @@
         "message": "My VPN credentials expired.",
         "intent": "vpn_access",
         "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T23:26:44",
+        "message": "I am locked out of my account. I tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T23:36:00",
+        "message": "I am locked out of my account. I tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T23:40:14",
+        "message": "I am locked out of my account, tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T23:41:29",
+        "message": "Can I get Wi-Fi access for a guest tomorrow?",
+        "intent": "unknown",
+        "action": "ask_follow_up"
+    },
+    {
+        "timestamp": "2026-09-20T23:41:42",
+        "message": "I think I got a phishing email asking for my login.",
+        "intent": "security_incident",
+        "action": "escalate_security"
     }
 ]
