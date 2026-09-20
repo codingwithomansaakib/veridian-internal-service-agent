@@ -202,5 +202,17 @@
         "message": "I think I got a phishing email asking for my login.",
         "intent": "security_incident",
         "action": "escalate_security"
+    },
+    {
+        "timestamp": "2026-09-20T23:57:01",
+        "message": "I am locked out of my account, tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T23:57:24",
+        "message": "Can I get Wi-Fi access for a guest tomorrow?",
+        "intent": "unknown",
+        "action": "ask_follow_up"
     }
 ]

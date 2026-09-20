@@ -1,6 +1,17 @@
 import os
-import requests
+import sys
+from pathlib import Path
+
 import streamlit as st
+
+# Make the project root importable when Streamlit runs this file.
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+# Load Streamlit Cloud secrets before importing the agent/Groq client.
+
+from app.agent import run_agent
 
 
 # ============================================================
@@ -19,26 +30,8 @@ st.set_page_config(
 # CONFIGURATION
 # ============================================================
 
-# Local development:
-# http://127.0.0.1:8000
-#
-# Streamlit Cloud:
-# Add API_URL to Streamlit Secrets.
-#
-# Example:
-# API_URL = "https://your-fastapi-service.onrender.com"
-
-try:
-    API_URL = st.secrets.get(
-        "API_URL",
-        os.getenv("API_URL", "http://127.0.0.1:8000")
-    )
-except Exception:
-    API_URL = os.getenv(
-        "API_URL",
-        "http://127.0.0.1:8000"
-    )
-
+# Streamlit runs the Veridian agent directly.
+# No separate FastAPI/Render URL is required.
 
 # ============================================================
 # SESSION STATE
@@ -145,28 +138,13 @@ Groq LLM
 
     st.divider()
 
-    st.subheader("🔌 Backend")
+    st.subheader("🤖 Agent Runtime")
 
-    st.code(API_URL)
+    st.success("Agent runs directly inside Streamlit")
 
-    if st.button("🔍 Check Backend Health", use_container_width=True):
-
-        try:
-            response = requests.get(
-                f"{API_URL}/health",
-                timeout=10,
-            )
-
-            if response.status_code == 200:
-                st.success("Backend is running ✅")
-                st.json(response.json())
-            else:
-                st.error(
-                    f"Backend returned status {response.status_code}"
-                )
-
-        except Exception as e:
-            st.error(f"Backend connection failed: {e}")
+    st.caption(
+        "Streamlit → Agent → Decision Engine → RAG → Tools → Groq"
+    )
 
     st.divider()
 
@@ -225,22 +203,11 @@ Groq LLM
 
 
 # ============================================================
-# API FUNCTION
+# AGENT FUNCTION
 # ============================================================
 
 def call_agent(message: str):
-
-    response = requests.post(
-        f"{API_URL}/chat",
-        json={
-            "message": message
-        },
-        timeout=120,
-    )
-
-    response.raise_for_status()
-
-    return response.json()
+    return run_agent(message)
 
 
 # ============================================================
@@ -355,12 +322,6 @@ if user_message:
         )
 
         st.rerun()
-
-    except requests.exceptions.RequestException as e:
-
-        st.error(
-            f"Backend connection error: {e}"
-        )
 
     except Exception as e:
 
