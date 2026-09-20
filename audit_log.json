@@ -214,5 +214,35 @@
         "message": "Can I get Wi-Fi access for a guest tomorrow?",
         "intent": "unknown",
         "action": "ask_follow_up"
+    },
+    {
+        "timestamp": "2026-09-20T23:58:33",
+        "message": "hey can you help, it's not working",
+        "intent": "unknown",
+        "action": "ask_follow_up"
+    },
+    {
+        "timestamp": "2026-09-21T00:02:43",
+        "message": "I am locked out of my account, tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-21T00:02:54",
+        "message": "Can I get Wi-Fi access for a guest tomorrow?",
+        "intent": "unknown",
+        "action": "ask_follow_up"
+    },
+    {
+        "timestamp": "2026-09-21T00:03:04",
+        "message": "I think I got a phishing email asking for my login.",
+        "intent": "security_incident",
+        "action": "escalate_security"
+    },
+    {
+        "timestamp": "2026-09-21T00:03:17",
+        "message": "hey can you help, it's not working",
+        "intent": "unknown",
+        "action": "ask_follow_up"
     }
 ]

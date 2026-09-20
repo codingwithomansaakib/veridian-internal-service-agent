@@ -4,19 +4,11 @@ from pathlib import Path
 
 import streamlit as st
 
-# Make the project root importable when Streamlit runs this file.
-ROOT_DIR = Path(__file__).resolve().parents[1]
-if str(ROOT_DIR) not in sys.path:
-    sys.path.insert(0, str(ROOT_DIR))
-
-# Load Streamlit Cloud secrets before importing the agent/Groq client.
-
-from app.agent import run_agent
-
 
 # ============================================================
 # PAGE CONFIG
 # ============================================================
+# MUST be the first Streamlit command in this file.
 
 st.set_page_config(
     page_title="Veridian Internal Service Agent",
@@ -24,6 +16,18 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+
+# ============================================================
+# PROJECT IMPORT
+# ============================================================
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from app.agent import run_agent
 
 
 # ============================================================
