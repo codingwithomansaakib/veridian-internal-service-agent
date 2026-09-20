@@ -1,0 +1,176 @@
+[
+    {
+        "timestamp": "2026-09-20T20:35:11",
+        "message": "I am locked out of my account. I tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T20:38:36",
+        "message": "Can I get Wi-Fi access for a guest tomorrow?",
+        "intent": "unknown",
+        "action": "human_review"
+    },
+    {
+        "timestamp": "2026-09-20T20:43:26",
+        "message": "I am locked out of my account. I tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T20:51:13",
+        "message": "I am locked out of my account. I tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T20:51:48",
+        "message": "Can I get Wi-Fi access for a guest tomorrow?",
+        "intent": "unknown",
+        "action": "human_review"
+    },
+    {
+        "timestamp": "2026-09-20T20:52:02",
+        "message": "I am locked out of my account. I tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T20:58:50",
+        "message": "I am locked out of my account. I tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T21:09:11",
+        "message": "I am locked out of my account, tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T21:16:23",
+        "message": "I am locked out of my account. I tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T21:55:20",
+        "message": "I am locked out of my account. I tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T21:58:31",
+        "message": "I am locked out of my account. I tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T22:00:17",
+        "message": "I am locked out of my account. I tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T22:01:38",
+        "message": "Can I get Wi-Fi access for a guest tomorrow?",
+        "intent": "unknown",
+        "action": "human_review"
+    },
+    {
+        "timestamp": "2026-09-20T22:04:45",
+        "message": "Can I get Wi-Fi access for a guest tomorrow?",
+        "intent": "guest_wifi",
+        "action": "provide_instructions"
+    },
+    {
+        "timestamp": "2026-09-20T22:11:35",
+        "message": "I am locked out of my account. I tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T22:16:17",
+        "message": "I am locked out of my account. I tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T22:16:24",
+        "message": "I am locked out of my account. I tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T22:17:20",
+        "message": "Can I get Wi-Fi access for a guest tomorrow?",
+        "intent": "guest_wifi",
+        "action": "provide_instructions"
+    },
+    {
+        "timestamp": "2026-09-20T22:17:59",
+        "message": "I think I got a phishing email asking for my login.",
+        "intent": "security_incident",
+        "action": "escalate_security"
+    },
+    {
+        "timestamp": "2026-09-20T22:19:31",
+        "message": "I cannot log into the expense tool.",
+        "intent": "expense_access",
+        "action": "route_to_finance_or_it_support"
+    },
+    {
+        "timestamp": "2026-09-20T22:19:41",
+        "message": "I work from home 4 days a week and need a monitor.",
+        "intent": "wfh_equipment",
+        "action": "manager_approval"
+    },
+    {
+        "timestamp": "2026-09-20T22:19:49",
+        "message": "A contractor needs VPN access next week.",
+        "intent": "vpn_access",
+        "action": "manager_approval"
+    },
+    {
+        "timestamp": "2026-09-20T22:21:22",
+        "message": "I am locked out of my account. I tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T22:22:23",
+        "message": "Can I get Wi-Fi access for a guest tomorrow?",
+        "intent": "guest_wifi",
+        "action": "provide_instructions"
+    },
+    {
+        "timestamp": "2026-09-20T22:48:35",
+        "message": "I am locked out of my account. I tried my password 6 times.",
+        "intent": "password_reset",
+        "action": "escalate_to_it"
+    },
+    {
+        "timestamp": "2026-09-20T22:49:19",
+        "message": "Can I get Wi-Fi access for a guest tomorrow?",
+        "intent": "unknown",
+        "action": "ask_follow_up"
+    },
+    {
+        "timestamp": "2026-09-20T22:49:56",
+        "message": "I think I got a phishing email asking for my login.",
+        "intent": "security_incident",
+        "action": "escalate_security"
+    },
+    {
+        "timestamp": "2026-09-20T22:50:12",
+        "message": "Can I get Wi-Fi access for a guest tomorrow?",
+        "intent": "unknown",
+        "action": "ask_follow_up"
+    },
+    {
+        "timestamp": "2026-09-20T22:50:35",
+        "message": "My VPN credentials expired.",
+        "intent": "vpn_access",
+        "action": "escalate_to_it"
+    }
+]
